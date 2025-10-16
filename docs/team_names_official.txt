@@ -1,0 +1,69 @@
+# HIVATALOS VIRTUÁLIS CSAPATNEVEK
+
+## KRITIKUS SZABÁLY
+A dokumentációban és a rendszerben KIZÁRÓLAG a virtuális csapatneveket használjuk!
+SOHA NE használjuk a valódi csapatneveket (Arsenal, Manchester City, Real Madrid, stb.)!
+
+---
+
+## Virtuális Angol Csapat Lista
+
+1. Aston Oroszlán
+2. Brentford
+3. Brighton
+4. Chelsea
+5. Crystal Palace
+6. Everton
+7. Fulham
+8. Liverpool
+9. London Ágyúk
+10. Manchester Kék
+11. Newcastle
+12. Nottingham
+13. Tottenham
+14. Vörös Ördögök
+15. West Ham
+16. Wolverhampton
+
+---
+
+## Virtuális Spanyol Csapat Lista
+
+1. Alaves
+2. Barcelona
+3. Bilbao
+4. Getafe
+5. Girona
+6. Las Palmas
+7. Madrid Fehér
+8. Madrid Piros
+9. Mallorca
+10. Osasuna
+11. San Sebastian
+12. Sevilla Piros
+13. Sevilla Zöld
+14. Valencia
+15. Villarreal
+16. Vigo
+
+---
+
+## Névkonverziós Táblázat (Csak Referenciára)
+
+### Angol Liga
+- Aston Villa → Aston Oroszlán
+- Arsenal → London Ágyúk
+- Manchester City → Manchester Kék
+- Manchester United → Vörös Ördögök
+
+### Spanyol Liga
+- Real Madrid → Madrid Fehér
+- Atlético Madrid → Madrid Piros
+- Real Sociedad → San Sebastian
+- Real Betis → Sevilla Zöld
+- Celta Vigo → Vigo
+
+---
+
+**FONTOS**: Ez a konverziós táblázat csak belső referenciára szolgál. 
+A rendszerben és dokumentációban MINDIG a virtuális neveket használjuk!

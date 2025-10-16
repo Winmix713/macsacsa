@@ -1,0 +1,6 @@
+// ... existing code ...
+
+### Példa rekord:
+
+```plaintext
+12:55, Brighton, Tottenham, 2, 1, 2, 3

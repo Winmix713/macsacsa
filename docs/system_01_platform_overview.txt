@@ -1,0 +1,76 @@
+### Virtuális Sport Fogadási Platform Elemzése
+
+A képen a **Tippmix Virtuális Sport** fogadási platformjának felülete látható, amely virtuális futballmérkőzésekre való fogadási lehetőségeket kínál.
+
+## Fő Elemek:
+
+### 1. **Két Bajnokság**
+
+- **Virtuális Premier Liga** (bal oldal) - angol csapatok
+- **Virtuális Spanyol Liga** (jobb oldal) - spanyol csapatok
+
+
+### 2. **Mérkőzési Táblázatok**
+
+Mindkét táblázat tartalmazza:
+
+- **Forduló számok** (084101, 084091, stb.)
+- **Csapatok nevei** (pl. Virtuális Lutontown, Virtuális Premier City)
+- **Fogadási típusok** három oszlopban:
+
+- 1×2 (hazai győzelem, döntetlen, vendég győzelem)
+- Gólszám típusú fogadások
+- További opciók
+
+
+
+
+
+### 3. **GYIK Szekció**(jobb oldal)
+
+**Milyen kimenetelekre fogadhatsz?**
+
+- Hagyományos sportfogadási piacok: 1×2, 1. félidő, 1×2 vagy gólszám típusú piacok
+- RNG (véletlen-számgenerátor) alapú eredmények
+
+
+**Mi a V-sport fogadás lényege?**
+
+- Tippmix fogadóirodai megszokott piacok
+- Nyereményszorzók (oddsok) tehetők meg
+- Szelvényen (kötésbéren) tudod megfogadni
+
+
+**Mi az a V-sport?**
+
+- Terminálról megállapítható fogadási lehetőség
+- Virtuális mérkőzések kimenetelére fogadhatsz
+- Nem valóságban kerülnek megrendezésre
+- Nincs fizikai pálya, játékosok vagy csapatok
+- Csak virtuális formában, RNG alapú
+
+
+**Hogyan épül fel egy bajnokság fordulója?**
+
+- 3 szakaszból áll (mecsnap)
+- Fogadási szakasz: 3-4 percig
+- Mérkőzés szakasz: 2-2.5 percig
+- Eredmény szakasz: 1-1.5 percig
+
+
+**Miért érdemes V-sport eseményekre fogadni?**
+
+- Nap bármely szakaszában játszható
+- Nincs szükség csapatok háttérismeretére
+- 7-8 perc alatt kiderül az eredmény
+
+
+### 4. **Csapatlista**(alul)
+
+**Premier Liga csapatok:** Aston Oroszlán, Brentford, Brighton, Chelsea, Crystal Palace, Everton, Fulham, Liverpool, London Ágyúk, Manchester Kék, Newcastle, Nottingham, Tottenham, Vörös Ördögök, West Ham, Wolverhampton
+
+**Spanyol Liga csapatok:** Alaves, Barcelona, Bilbao, Getafe, Girona, Las Palmas, Madrid Fehér, Madrid Piros, Mallorca, Osasuna, San Sebastian, Sevilla Piros, Sevilla Zöld, Valencia, Villarreal, Vigo
+
+## Összegzés
+
+Ez egy **virtuális sportfogadási rendszer**, ahol számítógép által generált futballmérkőzésekre lehet fogadni. A mérkőzések gyorsan lezajlanak (kb. 7-8 perc), és a hagyományos sportfogadási piacok elérhetők. A rendszer RNG (Random Number Generator) alapú, tehát teljesen véletlenszerű eredményeket produkál.
