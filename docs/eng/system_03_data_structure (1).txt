@@ -1,0 +1,31 @@
+# DATA STRUCTURE AND PREDICTION TASK SPECIFICATION
+
+## Overview
+
+This document describes the data structure of the virtual football betting system and the prediction task specification.
+
+---
+
+## 1. S6.CSV - Completed Championship
+
+### Description:
+
+A **fully completed championship** with all 240 matches played and results recorded.
+
+### Data Schema:
+
+| Field name | Type | Description | Example value
+|-----|-----|-----|-----
+| `match_time` | string | Match scheduled time | "12:55"
+| `home_team` | string | Home team name | "Brighton"
+| `away_team` | string | Away team name | "Tottenham"
+| `half_time_home_goals` | string | Home team half-time goals | "2"
+| `half_time_away_goals` | string | Away team half-time goals | "1"
+| `full_time_home_goals` | string | Home team full-time goals | "2"
+| `full_time_away_goals` | string | Away team full-time goals | "3"
+
+
+### Example record:
+
+```plaintext
+12:55, Brighton, Tottenham, 2, 1, 2, 3

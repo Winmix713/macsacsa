@@ -1,0 +1,147 @@
+### Virtual Football League - Detailed Analysis Interface (system_02.txt)
+
+The second image shows the **Tippmix Virtual Football League** detailed analysis and statistics interface, providing in-depth information about the virtual championship and matches.
+
+## Main Navigation Elements:
+
+### Top Menu Bar
+
+- **Overview** - General championship overview
+- **H-2-H** (Head-to-Head) - Teams' record against each other
+- **Schedule** - Match times
+- **Tables** - League table
+- **Teams** - Team information
+- **Archive** - Previous results
+
+
+## Left Panel - League Table
+
+### Table Structure:
+
+- **Position** (Pos.) - Ranking in championship
+- **Team** - Team name
+- **M** - Number of matches (26 rounds)
+- **W** - Wins
+- **D** - Draws
+- **L** - Losses
+- **GF** - Goals scored
+- **GA** - Goals conceded
+- **GD** - Goal difference
+- **P** - Points
+- **Form** - Last 5 match results (color-coded squares: green=win, yellow=draw, red=loss)
+
+
+### Top Teams (example):
+
+1. Liverpool - 26 matches, 17 wins, 3 draws, 6 losses, 63 points
+2. Manchester Blue - 26 matches, 15 wins, 5 draws, 6 losses, 50 points
+3. Chelsea - 26 matches, 14 wins, 5 draws, 7 losses, 47 points
+
+
+### Statistical Indicators (below table):
+
+- **45.1%** - Home win average (HOME)
+- **19.7%** - Draw average (DRAW)
+- **35.1%** - Away win average (AWAY)
+- **1.29** - Average home goals
+- **2.52** - Average goals per match
+- **1.13** - Average away goals
+
+
+## Center Panel - Match Details
+
+### Current Match: Liverpool vs Manchester Blue
+
+- **Date**: 15/10/25 - 09:15
+- **Round**: Round 26
+
+
+### Visual Statistics (pie charts):
+
+- **Liverpool**: 70% (likely possession or win probability)
+- **Center indicator**: 89% PLAYED, 32 TOTAL (likely match progress)
+- **Manchester Blue**: 70%
+
+
+### Detailed Match Statistics:
+
+- Number of shots
+- Shots on target
+- Free kicks
+- Corners
+- Offsides
+- Yellow cards
+
+
+### Schedule Table:
+
+- Date and time column
+- Home team
+- Away team
+- Result/Status
+
+
+## Right Panel - Comparative Statistics
+
+### Team Performance Table:
+
+Detailed comparison across different indicators:
+
+- **Home matches** / **Away matches**
+- **1st half** / **2nd half** statistics
+- Win percentages
+- Goal averages
+- Expected goals (xG)
+- Points per match
+
+
+Example rows:
+
+- Liverpool: 26 matches, 16 wins, 61-62% win rate, 10 home wins, 1.62 average
+- Red Devils: 26 matches, 14 wins, 53-60% win rate
+- Tottenham: 26 matches, 14 wins, 53-60% win rate
+
+
+### Bottom Section - Head-to-Head:
+
+- **HOME PAGE** - Main page
+- **Away** / **Home** tab switch
+- Detailed H2H table with previous encounters
+
+
+### Recent Matches Table:
+
+- Date
+- Teams
+- Result
+- Venue (Home/Away)
+
+
+## Bottom Panel - Detailed Statistical Comparison
+
+### Home/Away Performance:
+
+Detailed comparison of two teams (Tottenham vs Manchester Blue):
+
+- Number of matches: 26-26
+- Wins: 14-21
+- Win percentage: 53.85% - 80.77%
+- Half statistics (1st half / 2nd half)
+- Expected goals (xG): 1.52 - 2.12
+- Probability indicators: 7 matches 54% - 8 matches 53%
+- Percentage chances: 21 matches 80% - 21 matches 80%
+
+
+## Summary
+
+This interface is a **professional-level analysis and statistics dashboard** for virtual football championship. It provides detailed data:
+
+- League table with current standings and form
+- Match-specific statistics with visual display
+- Team performance comparison
+- Head-to-head records
+- Historical data and trends
+- Probability indicators and expected values (xG - expected goals)
+
+
+The system is RNG-based but applies detailed statistical modeling that simulates realistic football analytics, helping bettors make informed decisions.
