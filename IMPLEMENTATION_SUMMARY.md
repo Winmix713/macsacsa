@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a minimal FastAPI service for Spanish Liga pattern-first aggregations, implementing pattern-based match outcome predictions with directed pair handling.
+This project combines a minimal FastAPI service with a Next.js + React frontend for Spanish Liga pattern-first aggregations, delivering pattern-based match outcome predictions with directed pair handling.
 
 ## What Was Implemented
 
@@ -67,7 +67,16 @@ Included pairs:
 - Bilbao ↔ Vigo
 - Girona ↔ Mallorca
 
-### 5. Testing
+### 5. Frontend (Next.js + React SPA)
+
+- ✅ New `frontend/` package built with Next.js 14 (App Router)
+- ✅ `PredictionForm` client component with form validation & UX feedback
+- ✅ Dynamic fetch to FastAPI backend via `NEXT_PUBLIC_BACKEND_URL`
+- ✅ Responsive styling with dark-themed design in `globals.css`
+- ✅ Environment template `.env.local.example`
+- ✅ npm scripts (`dev`, `build`, `start`, `lint`) defined in `package.json`
+
+### 6. Testing
 
 #### Unit Tests (`tests/test_api.py`)
 - ✅ Health endpoint validation
@@ -145,6 +154,13 @@ tests/
   test_api.py         # Unit tests
   test_integration.py # Integration tests
 
+frontend/
+  app/               # Next.js App Router pages
+  components/        # React components
+  lib/               # Shared utilities
+  styles/globals.css # Global styling
+  package.json       # Node scripts & deps
+
 main.py              # Entry point
 requirements.txt     # Dependencies
 README.md           # User docs
@@ -157,6 +173,8 @@ ARCHITECTURE.md     # Technical docs
 - **Pydantic**: Data validation
 - **pytest**: Testing framework
 - **Uvicorn**: ASGI server
+- **Next.js + React**: Client-facing SPA
+- **TypeScript**: Typed frontend development
 
 ### Design Patterns
 
@@ -180,6 +198,8 @@ ARCHITECTURE.md     # Technical docs
 | .env.example | ✅ | Configuration template |
 | README | ✅ | Complete user guide |
 | Aggregated stats | ✅ | JSON file with pattern data |
+| Next.js frontend client | ✅ | `frontend/` SPA targeting the API |
+| CORS support | ✅ | Configurable via `ALLOWED_ORIGINS` |
 
 ## How to Use
 
@@ -195,6 +215,14 @@ pip install -r requirements.txt
 python main.py
 # or
 ./run_server.sh
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local  # optional override for backend URL
+npm run dev
 ```
 
 ### Run Tests

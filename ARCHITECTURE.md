@@ -19,6 +19,17 @@
 │   └── validators.py                      # Team name validation & normalization
 ├── data/                                  # Data storage
 │   └── spanish_league_patterns.json       # Aggregated pattern statistics
+├── frontend/                              # Next.js + React SPA
+│   ├── app/                               # App Router pages
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components/                        # UI building blocks
+│   │   └── PredictionForm.tsx
+│   ├── lib/                               # Shared utilities
+│   │   └── teams.ts
+│   ├── styles/globals.css                 # Global styling
+│   ├── package.json                       # Node dependencies & scripts
+│   └── .env.local.example                 # Frontend environment sample
 ├── tests/                                 # Test suite
 │   ├── __init__.py
 │   ├── test_api.py                        # API endpoint tests
@@ -98,6 +109,22 @@ Aggregated pattern statistics per directed pair:
   }
 }
 ```
+
+### 6. Frontend (Next.js + React)
+
+Single-page application that consumes the FastAPI backend:
+
+- Built with Next.js App Router and React client components
+- `PredictionForm` component provides team selectors, validation, and fetch logic
+- Uses `NEXT_PUBLIC_BACKEND_URL` to communicate with the FastAPI service
+- Displays prediction tip, probabilities, rationale, and metadata in real time
+- Styled with a custom minimal design in `styles/globals.css`
+
+### 7. Cross-Origin Support
+
+- FastAPI configured with CORS middleware (`CORSMiddleware`)
+- Default allowed origins: `http://localhost:3000`, `http://127.0.0.1:3000`
+- Additional origins can be supplied via `ALLOWED_ORIGINS` environment variable
 
 ## Key Design Decisions
 

@@ -1,12 +1,29 @@
+import os
 from functools import lru_cache
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import HealthResponse, PredictRequest, PredictResponse
 from .services import PredictionService
 
 app = FastAPI(title="Spanish Liga Pattern Prediction API", version="mvp-pattern-v1")
+
+_default_origins = {"http://localhost:3000", "http://127.0.0.1:3000"}
+_env_origins = {
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+}
+allowed_origins = list(_default_origins.union(_env_origins))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @lru_cache(maxsize=1)
