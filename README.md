@@ -108,6 +108,23 @@ Példa válasz:
 }
 ```
 
+### Webes felület (PWA)
+
+A repó `static/` mappájában egy mobil-first, PWA-képes frontend érhető el, amely a fenti `POST /predict` végpontra épít. 
+A felület ugyanazon az originön futtatva (pl. `uvicorn` + egyszerű statikus kiszolgáló) automatikusan meghívja az API-t.
+
+Gyors próba helyben:
+
+```bash
+# indítsd az API-t az alap 8000-es porton
+uvicorn api.app:app --reload
+
+# külön terminálban szerváld ki a statikus fájlokat
+python -m http.server --directory static 8080
+```
+
+Nyisd meg a `http://localhost:8080` címet mobil vagy desktop böngészőből.
+
 ## Tesztelés
 
 ```bash
