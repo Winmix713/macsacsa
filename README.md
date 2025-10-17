@@ -30,7 +30,9 @@ cp .env.example .env
 
 ## Futtatás
 
-### Fejlesztői mód
+### Backend (FastAPI)
+
+#### Fejlesztői mód
 
 ```bash
 python main.py
@@ -42,13 +44,24 @@ vagy
 uvicorn api.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Éles mód
+#### Éles mód
 
 ```bash
 uvicorn api.app:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 A szolgáltatás a `http://localhost:8000` címen lesz elérhető.
+
+### Frontend (Next.js + React)
+
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local  # opcionális, ha más backend URL-t használsz
+npm run dev
+```
+
+A frontend a `http://localhost:3000` címen fut, és a `.env.local`-ban megadott FastAPI backendhez küldi a kéréseket (alapértelmezés szerint `http://localhost:8000`).
 
 ## API Dokumentáció
 
