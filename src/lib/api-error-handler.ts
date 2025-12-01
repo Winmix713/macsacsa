@@ -25,6 +25,8 @@ function showRateLimitWarning(retryAfter?: number) {
 export const handleApiError = (error: unknown): ApiErrorShape => {
   const err = error as { status?: number; message?: string; [key: string]: unknown };
   const status = typeof err.status === "number" ? err.status : undefined;
+  const rawRetryAfter = (err as Record<string, unknown>).retryAfter;
+  const retryAfter = typeof rawRetryAfter === "number" ? rawRetryAfter : undefined;
 
   if (status === 401) {
     redirectToLogin();
@@ -35,7 +37,6 @@ export const handleApiError = (error: unknown): ApiErrorShape => {
   }
 
   if (status === 429) {
-    const retryAfter = typeof (err as Record<string, unknown>).retryAfter === "number" ? (err as Record<string, unknown>).retryAfter : undefined;
     showRateLimitWarning(retryAfter);
   }
 
@@ -45,9 +46,11 @@ export const handleApiError = (error: unknown): ApiErrorShape => {
     status,
     message: err.message || "Unexpected error",
   };
-  if ((err as Record<string, unknown>).retryAfter) {
-    shape.retryAfter = (err as Record<string, unknown>).retryAfter as number;
+
+  if (retryAfter !== undefined) {
+    shape.retryAfter = retryAfter;
   }
+
   shape.details = err;
   return shape;
 };

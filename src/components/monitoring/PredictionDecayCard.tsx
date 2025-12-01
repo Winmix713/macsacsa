@@ -24,10 +24,16 @@ interface DecayEvent {
   three_day_accuracy: number;
   seven_day_avg_accuracy: number;
   drop_percentage: number;
-  severity: "warning" | "critical" | "severe";
-  status: "pending" | "acknowledged" | "auto_retrain_triggered" | "overridden";
-  action_taken?: string;
-  triggered_at: string;
+  severity?: "warning" | "critical" | "severe";
+  status?: "pending" | "acknowledged" | "auto_retrain_triggered" | "overridden";
+  affected_predictions?: number | null;
+  metadata?: Record<string, unknown> | null;
+  action_taken?: string | null;
+  override_reason?: string | null;
+  overridden_by?: string | null;
+  triggered_at?: string;
+  resolved_at?: string | null;
+  created_at?: string;
 }
 
 interface MetricBoxProps {
@@ -231,7 +237,11 @@ export const PredictionDecayCard = () => {
     },
   };
 
-  const config = severityConfig[latestEvent.severity];
+  const severity = latestEvent.severity ?? "warning";
+  const config = severityConfig[severity];
+  const triggeredAt = latestEvent.triggered_at
+    ? new Date(latestEvent.triggered_at).toLocaleString()
+    : "Not available";
 
   return (
     <>
@@ -241,7 +251,7 @@ export const PredictionDecayCard = () => {
             <AlertTriangle className="h-5 w-5 text-red-600" />
             Prediction Decay Detected
             <Badge variant={config.badgeVariant}>
-              {latestEvent.severity.toUpperCase()}
+              {severity.toUpperCase()}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -275,7 +285,7 @@ export const PredictionDecayCard = () => {
               </p>
               <p className="text-sm text-muted-foreground">
                 Triggered:{" "}
-                {new Date(latestEvent.triggered_at).toLocaleString()}
+                {triggeredAt}
               </p>
             </div>
 

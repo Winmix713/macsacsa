@@ -8,9 +8,8 @@ interface AuditLogPayload {
   details: Record<string, unknown>;
 }
 
-const insertAuditLog = async (payload: AuditLogPayload & { userId: string }) => {
+const insertAuditLog = async (payload: AuditLogPayload): Promise<void> => {
   const { error } = await supabase.from("admin_audit_log").insert({
-    user_id: payload.userId,
     action: payload.action,
     details: payload.details,
   });
@@ -24,12 +23,12 @@ export const useAuditLog = () => {
   const { user } = useAuth();
 
   const mutation = useMutation<void, Error, AuditLogPayload>({
-    mutationFn: (payload) => {
+    mutationFn: async (payload) => {
       if (!user?.id) {
         throw new Error("User not authenticated");
       }
 
-      return insertAuditLog({ ...payload, userId: user.id });
+      await insertAuditLog(payload);
     },
   });
 
