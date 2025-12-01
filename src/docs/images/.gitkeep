@@ -1,0 +1,16 @@
+# This file ensures the images directory is tracked by git
+# Screenshots should be added according to SCREENSHOTS_GUIDE.md
+
+# Required screenshots:
+# - homepage.png
+# - signup.png
+# - login.png
+# - dashboard.png
+# - predictions-list.png
+# - new-prediction.png
+# - analytics.png
+# - jobs.png
+# - monitoring.png
+# - mobile-view.png
+# - profile-edit.png
+# - access-denied.png
