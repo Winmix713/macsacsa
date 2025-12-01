@@ -1,6 +1,5 @@
 import React from 'react';
 import { Toaster } from '@/components/ui/toaster';
-// import ToastPortal from '@/components/ui/ToastPortal'; // Ha a Toaster (shadcn) az új, ezt érdemes lehet kivenni
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
@@ -13,12 +12,14 @@ import logger from '@/lib/logger';
 import { captureExceptionSafe } from '@/lib/sentry';
 import { env } from '@/config/env';
 
-// Configure TanStack Query with sensible defaults
+// Fontos: Az App.css-t NE importáld be, mert elrontja a layoutot!
+// import './App.css'; // TÖRÖLVE/KIKOMMENTELVE
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000,   // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       retry: (failureCount, error) => {
         if (error && typeof error === 'object' && 'status' in error) {
           const status = error.status as number;
@@ -27,12 +28,17 @@ const queryClient = new QueryClient({
         return failureCount < 3;
       },
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      refetchOnWindowFocus: env.isDev,
+      
+      // JAVÍTÁS: Prod-ban legyen true (friss adat), Dev-ben false (ne ugráljon debug közben)
+      // Vagy ha nem akarod, hogy fókuszváltáskor töltsön: false
+      refetchOnWindowFocus: env.isProd, 
+      
       refetchOnReconnect: true
     },
     mutations: {
       retry: 1,
       onError: error => {
+        // Dev módban is lássuk a konzolon a hibát
         logger.error('Mutation error:', error);
         if (env.isProd) {
           captureExceptionSafe(error);
@@ -54,6 +60,7 @@ const App = () => (
     }}
   >
     <QueryClientProvider client={queryClient}>
+      {/* enableSystem={true} fontos a rendszer téma érzékeléséhez */}
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <TooltipProvider>
           <BrowserRouter
@@ -62,11 +69,9 @@ const App = () => (
               v7_relativeSplatPath: true
             }}
           >
-            {/* AuthProvider moved OUTSIDE FeatureFlagsProvider so flags can access user data */}
             <AuthProvider>
               <FeatureFlagsProvider>
                 <AppRoutes />
-                {/* Döntsd el, melyik kell: ToastPortal VAGY Toaster. Általában a Toaster elég. */}
                 <Toaster />
               </FeatureFlagsProvider>
             </AuthProvider>
@@ -75,6 +80,6 @@ const App = () => (
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
-  );
+);
 
 export default App;

@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './')
+      // Javítva: közvetlenül a src mappára mutat
+      '@': path.resolve(__dirname, './src')
     }
   },
   server: {

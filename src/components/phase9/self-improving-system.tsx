@@ -12,9 +12,7 @@ import {
   Rocket, 
   TestTube, 
   TrendingUp, 
-  Settings,
   Play,
-  Pause,
   CheckCircle,
   XCircle,
   Clock,
@@ -28,8 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { 
   FeatureExperiment, 
   ExperimentDashboardProps,
-  FeatureGenerationRequest,
-  ContinuousLearningResponse
+  FeatureGenerationRequest
 } from '@/types/phase9';
 
 // Experiment Dashboard Component
@@ -724,8 +721,3 @@ export const FeatureGenerationWizard: React.FC<FeatureGenerationWizardProps> = (
     </Card>
   );
 };
-
-// Import supabase client
-import { supabase } from '@/integrations/supabase/client';
-
- 

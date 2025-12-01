@@ -2,22 +2,17 @@ import React, { Suspense, ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import Sidebar from '@/components/navigation/Sidebar';
-import PageLoading from '@/components/ui/PageLoading';
+// Ellenőrizd, hogy a fájl neve nálad PageLoading.tsx vagy page-loading.tsx!
+import PageLoading from '@/components/ui/page-loading'; 
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface AppLayoutProps {
   children?: ReactNode;
-  /** When true, uses Outlet for nested routes, otherwise renders children */
   useOutlet?: boolean;
-  /** Additional CSS classes for the main content area */
   className?: string;
-  /** Whether to show the sidebar (default: true) */
   showSidebar?: boolean;
-  /** Whether to show error boundary (default: true) */
   withErrorBoundary?: boolean;
-  /** Custom loading fallback */
   loadingFallback?: ReactNode;
-  /** Custom error fallback */
   errorFallback?: ReactNode;
 }
 
@@ -33,21 +28,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const content = useOutlet ? <Outlet /> : children;
 
   const wrappedContent = (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      {showSidebar && <Sidebar />}
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+      {/* Sidebar - Fixen a bal oldalon */}
+      {showSidebar && (
+        <aside className="hidden lg:block shrink-0">
+          <Sidebar />
+        </aside>
+      )}
 
-      {/* Main Content */}
+      {/* Fő tartalom terület - Ez tölti ki a maradék helyet */}
       <main 
         className={cn(
-          'flex-1 transition-all duration-300 ease-in-out',
-          showSidebar && 'lg:ml-16', // Adjust based on sidebar width
+          'flex-1 flex flex-col h-full overflow-hidden relative transition-all duration-300',
           className
         )}
       >
-        <Suspense fallback={loadingFallback || <PageLoading message="Loading content..." />}>
-          {content}
-        </Suspense>
+        {/* Görgethető konténer */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
+          <div className="mx-auto max-w-7xl animate-fade-in space-y-6">
+            <Suspense fallback={loadingFallback || <PageLoading message="Betöltés..." />}>
+              {content}
+            </Suspense>
+          </div>
+        </div>
       </main>
     </div>
   );

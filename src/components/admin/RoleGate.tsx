@@ -1,61 +1,28 @@
-import { Fragment, useEffect, type ReactNode } from "react";
-import { Loader2, ShieldAlert } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import type { UserRole } from "@/providers/AuthProvider";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface RoleGateProps {
-  allowedRoles: UserRole[];
   children: ReactNode;
-  fallback?: ReactNode;
-  loadingMessage?: string;
+  allowedRoles: string[]; // Pl. ['admin', 'analyst']
 }
 
-const DefaultFallback = () => (
-  <Card className="mx-auto max-w-lg border-destructive/40 bg-destructive/10 shadow-none">
-    <CardHeader className="flex flex-row items-center gap-3">
-      <div className="rounded-full bg-destructive/20 p-2 text-destructive">
-        <ShieldAlert className="h-5 w-5" />
-      </div>
-      <CardTitle className="text-lg">Access denied</CardTitle>
-    </CardHeader>
-    <CardContent className="text-sm text-muted-foreground">
-      You do not have permission to view this section. Please contact an administrator if you believe this is an
-      error.
-    </CardContent>
-  </Card>
-);
-
-const RoleGate = ({ allowedRoles, children, fallback, loadingMessage = "Checking permissions" }: RoleGateProps) => {
+const RoleGate = ({ children, allowedRoles }: RoleGateProps) => {
   const { profile, loading } = useAuth();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && profile && !allowedRoles.includes(profile.role)) {
-      navigate("/unauthorized", { replace: true });
-    }
-  }, [loading, profile, allowedRoles, navigate]);
-
+  // Ha még töltődik a profil, ne dobjuk ki azonnal
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="text-sm font-medium">{loadingMessage}…</span>
-      </div>
-    );
+    return null; // Vagy egy spinner, ha a szülő nem kezelné
   }
 
+  // Ha nincs profil, vagy a profil szerepköre nincs az engedélyezettek között
   if (!profile || !allowedRoles.includes(profile.role)) {
-    return <Fragment>{fallback ?? <DefaultFallback />}</Fragment>;
+    // Átirányítás a dashboardra, mivel be van lépve, csak nincs joga ide
+    // Esetleg mehet a /unauthorized oldalra is
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  return <Fragment>{children}</Fragment>;
+  return <>{children}</>;
 };
 
 export default RoleGate;

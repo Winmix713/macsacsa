@@ -1,85 +1,37 @@
-import { ReactNode, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import PageLoading from '@/components/ui/page-loading'; // Az egységes töltőképernyő
 
 interface AuthGateProps {
   children: ReactNode;
   requireAuth?: boolean;
-  allowedRoles?: Array<'admin' | 'analyst' | 'user'>;
 }
-
-// Public routes that don't require authentication
-const PUBLIC_ROUTES = [
-  '/',
-  '/login',
-  '/signup',
-];
-
-// Routes accessible in demo mode (read-only)
-const DEMO_ROUTES = [
-  '/',
-  '/predictions',
-  '/matches',
-  '/teams',
-  '/leagues',
-];
 
 const AuthGate = ({ 
   children, 
-  requireAuth = true,
-  allowedRoles = ['admin', 'analyst', 'user']
+  requireAuth = true 
 }: AuthGateProps) => {
-  const { user, profile, loading } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    if (loading) return;
-
-    const currentPath = location.pathname;
-    const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
-    const isDemoRoute = DEMO_ROUTES.some(route => currentPath.startsWith(route));
-
-    // If route doesn't require auth, allow access
-    if (!requireAuth || isPublicRoute) {
-      return;
-    }
-
-    // If user is not authenticated
-    if (!user) {
-      // Allow demo routes for unauthenticated users (read-only access)
-      if (isDemoRoute) {
-        return;
-      }
-      
-      // Redirect to login for protected routes
-      navigate('/login', { 
-        state: { from: location.pathname },
-        replace: true 
-      });
-      return;
-    }
-
-    // If user is authenticated, check role permissions
-    if (profile && !allowedRoles.includes(profile.role)) {
-      navigate('/dashboard', { replace: true });
-      return;
-    }
-  }, [user, profile, loading, requireAuth, allowedRoles, navigate, location]);
-
-  // Show loading spinner while checking auth state
+  // 1. Töltés állapota
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PageLoading message="Hitelesítés ellenőrzése..." />;
   }
 
+  // 2. Ha nem kötelező az auth (pl. Landing page, Demo oldalak), engedjük át
+  // Az AppRoutes-ban a requireAuth={false} beállítással kezeljük a "Demo" útvonalakat
+  if (!requireAuth) {
+    return <>{children}</>;
+  }
+
+  // 3. Ha kötelező az auth, de nincs user -> Login
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  // 4. Van user és kell auth -> Engedjük át (A szerepkört a RoleGate ellenőrzi majd)
   return <>{children}</>;
 };
 

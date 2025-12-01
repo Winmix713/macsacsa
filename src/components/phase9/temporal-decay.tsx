@@ -6,40 +6,55 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Clock, 
-  RefreshCw, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Clock,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
   TrendingDown,
   Activity,
-  Calendar
+  Calendar,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { TemporalDecayService } from '@/lib/phase9-api';
-import type { 
-  InformationFreshness, 
+import type {
+  InformationFreshness,
   FreshnessIndicatorProps,
-  TemporalDecayConfig 
+  // TemporalDecayConfig // Not used, can be removed
 } from '@/types/phase9';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client'; // Keep this as the single source
+
+// Helper function to get days since update
+// Moved this helper function here as it's used in both components
+const getDaysSinceUpdate = (lastUpdated: string): number => {
+  const now = new Date();
+  const updated = new Date(lastUpdated);
+  const diffTime = Math.abs(now.getTime() - updated.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
 
 // Freshness Indicator Component
 export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
   tableName,
   recordId,
-  dataType,
-  showDetails = false
+  // dataType, // Removed as it's not directly used in this component's logic
+  showDetails = false,
 }) => {
-  const [freshness, setFreshness] = useState<InformationFreshness | null>(null);
+  const [freshness, setFreshness] = useState<InformationFreshness | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchFreshness = useCallback(async () => {
+    setIsLoading(true); // Set loading true at the start of fetch
     try {
       setError(null);
-      const result = await TemporalDecayService.calculateFreshnessScore(tableName, recordId);
-      
+      const result = await TemporalDecayService.calculateFreshnessScore(
+        tableName,
+        recordId,
+      );
+
       if (result.success) {
         // Get full freshness record
         const { data, error: fetchError } = await supabase
@@ -49,25 +64,34 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
           .eq('record_id', recordId)
           .single();
 
+        // PGRST116 means "no rows found", which is a valid scenario if a record
+        // hasn't been processed for freshness yet. Handle it gracefully.
         if (fetchError && fetchError.code !== 'PGRST116') {
           throw fetchError;
         }
 
-        setFreshness(data as InformationFreshness);
+        setFreshness(data as InformationFreshness | null); // data can be null
       } else {
         throw new Error(result.error);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch freshness';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch freshness';
       setError(errorMessage);
+      toast({
+        title: 'Error fetching freshness',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      setFreshness(null); // Ensure freshness is null on error
     } finally {
       setIsLoading(false);
     }
-  }, [tableName, recordId]);
+  }, [tableName, recordId]); // Removed dataType from dependencies as it's not used by fetchFreshness
 
   useEffect(() => {
     fetchFreshness();
-  }, [tableName, recordId, dataType, fetchFreshness]);
+  }, [fetchFreshness]);
 
   const getFreshnessColor = (score: number) => {
     if (score >= 0.8) return 'text-green-600';
@@ -86,30 +110,27 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
     if (isStale) return 'STALE';
     if (score >= 0.8) return 'FRESH';
     if (score >= 0.5) return 'AGING';
-    return 'STALE';
-  };
-
-  const getDaysSinceUpdate = (lastUpdated: string) => {
-    const now = new Date();
-    const updated = new Date(lastUpdated);
-    const diffTime = Math.abs(now.getTime() - updated.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return 'STALE'; // Default to stale if less than 0.5
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center gap-2">
-        <Clock className="h-4 w-4 animate-pulse" />
+        <Clock className="h-4 w-4 animate-pulse text-gray-400" />
         <span className="text-sm text-gray-500">Loading...</span>
       </div>
     );
   }
 
+  // Handle case where freshness data might not exist yet for a record
   if (error || !freshness) {
     return (
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-red-500" />
-        <span className="text-sm text-red-500">Error</span>
+        <span className="text-sm text-red-500">
+          {error || 'Not available'}
+        </span>{' '}
+        {/* Display error or 'Not available' */}
       </div>
     );
   }
@@ -128,11 +149,14 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
           {freshnessPercentage.toFixed(0)}%
         </span>
       </div>
-      
+
       {showDetails && (
         <div className="text-xs text-gray-500">
           <div>Updated {daysSinceUpdate} days ago</div>
-          <div>Decay rate: {(freshness.decay_rate * 100).toFixed(1)}%/day</div>
+          {/* Ensure decay_rate is a number before toFixed */}
+          {typeof freshness.decay_rate === 'number' && (
+            <div>Decay rate: {(freshness.decay_rate * 100).toFixed(1)}%/day</div>
+          )}
         </div>
       )}
     </div>
@@ -147,7 +171,7 @@ interface TemporalDecayDashboardProps {
 
 export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
   autoRefresh = true,
-  refreshInterval = 60000 // 1 minute
+  refreshInterval = 60000, // 1 minute
 }) => {
   const [staleRecords, setStaleRecords] = useState<InformationFreshness[]>([]);
   const [allRecords, setAllRecords] = useState<InformationFreshness[]>([]);
@@ -156,10 +180,11 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const fetchFreshnessData = async () => {
+  const fetchFreshnessData = useCallback(async () => {
+    setIsLoading(true); // Ensure loading is true on initial fetch or full refresh
     try {
       setError(null);
-      
+
       // Get all freshness records
       const { data, error: fetchError } = await supabase
         .from('information_freshness')
@@ -168,49 +193,55 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
 
       if (fetchError) throw fetchError;
 
-      const records = data as InformationFreshness[];
-      const stale = records.filter(record => record.is_stale);
-      
+      const records = (data || []) as InformationFreshness[]; // Handle data being null
+      const stale = records.filter((record) => record.is_stale);
+
       setAllRecords(records);
       setStaleRecords(stale);
       setLastRefresh(new Date());
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch freshness data';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch temporal decay data';
       setError(errorMessage);
       toast({
-        title: 'Error fetching freshness data',
+        title: 'Error fetching temporal decay data',
         description: errorMessage,
-        variant: 'destructive'
+        variant: 'destructive',
       });
+      setAllRecords([]); // Clear records on error
+      setStaleRecords([]); // Clear stale records on error
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, []);
 
   const handleRefreshStaleData = async () => {
     setIsRefreshing(true);
-    
+
     try {
       const result = await TemporalDecayService.checkAndRefreshStaleData();
-      
+
       if (result.success) {
         toast({
           title: 'Stale data refreshed',
           description: `Refreshed ${result.refreshedCount} records`,
         });
-        
+
         // Refetch data to update the UI
         await fetchFreshnessData();
       } else {
         throw new Error(result.error);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh stale data';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to refresh stale data';
       toast({
         title: 'Error refreshing stale data',
         description: errorMessage,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setIsRefreshing(false);
@@ -229,23 +260,24 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
       const interval = setInterval(fetchFreshnessData, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refreshInterval]);
+  }, [autoRefresh, refreshInterval, fetchFreshnessData]);
 
   const getDataTypeStats = () => {
-    const stats: Record<string, { total: number; stale: number; avgFreshness: number }> = {};
-    
-    allRecords.forEach(record => {
+    const stats: Record<string, { total: number; stale: number; avgFreshness: number }> =
+      {};
+
+    allRecords.forEach((record) => {
       if (!stats[record.data_type]) {
         stats[record.data_type] = { total: 0, stale: 0, avgFreshness: 0 };
       }
-      
+
       stats[record.data_type].total++;
       if (record.is_stale) stats[record.data_type].stale++;
       stats[record.data_type].avgFreshness += record.freshness_score;
     });
 
     // Calculate averages
-    Object.keys(stats).forEach(dataType => {
+    Object.keys(stats).forEach((dataType) => {
       stats[dataType].avgFreshness = stats[dataType].avgFreshness / stats[dataType].total;
     });
 
@@ -253,8 +285,11 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
   };
 
   const getOverallHealth = () => {
-    if (allRecords.length === 0) return 0;
-    const totalFreshness = allRecords.reduce((sum, record) => sum + record.freshness_score, 0);
+    if (allRecords.length === 0) return 100; // If no records, consider 100% healthy
+    const totalFreshness = allRecords.reduce(
+      (sum, record) => sum + record.freshness_score,
+      0,
+    );
     return (totalFreshness / allRecords.length) * 100;
   };
 
@@ -276,13 +311,14 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
+            <Clock className="h-5 w-5 text-gray-600" />
             Temporal Decay Monitor
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-8 w-8 animate-spin" />
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-3 text-lg text-gray-600">Loading Dashboard...</span>
           </div>
         </CardContent>
       </Card>
@@ -303,7 +339,11 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-          <Button onClick={handleRefresh} className="mt-4 w-full" variant="outline">
+          <Button
+            onClick={handleRefresh}
+            className="mt-4 w-full"
+            variant="outline"
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             Retry
           </Button>
@@ -322,7 +362,7 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
+              <Activity className="h-5 w-5 text-blue-600" />
               Data Freshness Health
             </CardTitle>
             <div className="flex items-center gap-2">
@@ -348,9 +388,15 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
             <div className={`text-4xl font-bold ${getHealthColor(overallHealth)}`}>
               {overallHealth.toFixed(1)}%
             </div>
-            <Badge 
-              variant={overallHealth >= 80 ? 'default' : overallHealth >= 60 ? 'secondary' : 'destructive'}
-              className="text-lg px-3 py-1"
+            <Badge
+              variant={
+                overallHealth >= 80
+                  ? 'default'
+                  : overallHealth >= 60
+                    ? 'secondary'
+                    : 'destructive'
+              }
+              className="px-3 py-1 text-lg"
             >
               {getHealthLabel(overallHealth)}
             </Badge>
@@ -366,16 +412,18 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingDown className="h-5 w-5" />
+            <TrendingDown className="h-5 w-5 text-purple-600" />
             Freshness by Data Type
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {Object.entries(dataTypeStats).map(([dataType, stats]) => (
-              <div key={dataType} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold capitalize">{dataType.replace('_', ' ')}</h4>
+              <div key={dataType} className="rounded-lg border p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="font-semibold capitalize">
+                    {dataType.replace('_', ' ')}
+                  </h4>
                   {stats.stale > 0 ? (
                     <AlertTriangle className="h-4 w-4 text-red-500" />
                   ) : (
@@ -389,13 +437,17 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Stale:</span>
-                    <span className={`font-semibold ${stats.stale > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span
+                      className={`font-semibold ${stats.stale > 0 ? 'text-red-600' : 'text-green-600'}`}
+                    >
                       {stats.stale}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Avg Freshness:</span>
-                    <span className={`font-semibold ${getHealthColor(stats.avgFreshness * 100)}`}>
+                    <span
+                      className={`font-semibold ${getHealthColor(stats.avgFreshness * 100)}`}
+                    >
                       {(stats.avgFreshness * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -420,18 +472,24 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                {staleRecords.length} records are stale and may need refreshing. 
+                {staleRecords.length} records are stale and may need refreshing.
                 Stale data can affect prediction accuracy.
               </AlertDescription>
             </Alert>
-            
+
             <div className="space-y-2">
               {staleRecords.slice(0, 5).map((record) => (
-                <div key={record.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={`${record.table_name}-${record.record_id}`} // More robust key
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <div>
-                    <div className="font-semibold">{record.table_name}.{record.record_id}</div>
+                    <div className="font-semibold">
+                      {record.table_name}.{record.record_id}
+                    </div>
                     <div className="text-sm text-gray-600">
-                      {record.data_type} • {record.freshness_score.toFixed(2)} freshness
+                      {record.data_type} •{' '}
+                      {record.freshness_score.toFixed(2)} freshness
                     </div>
                   </div>
                   <Badge variant="destructive">
@@ -446,7 +504,7 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
               )}
             </div>
 
-            <Button 
+            <Button
               onClick={handleRefreshStaleData}
               disabled={isRefreshing}
               className="w-full"
@@ -471,14 +529,16 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5 text-orange-600" />
             Decay Configuration
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-gray-600 space-y-2">
-            <p><strong>Decay Rates:</strong></p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
+          <div className="space-y-2 text-sm text-gray-600">
+            <p>
+              <strong>Decay Rates:</strong>
+            </p>
+            <ul className="ml-2 list-inside list-disc space-y-1">
               <li>Match data: 5% per day (slow decay)</li>
               <li>Team statistics: 10% per day (moderate decay)</li>
               <li>Pattern data: 15% per day (moderate decay)</li>
@@ -486,7 +546,8 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
               <li>User predictions: 10% per day (moderate decay)</li>
             </ul>
             <p className="mt-3">
-              <strong>Formula:</strong> Freshness = e^(-decay_rate × days_elapsed)
+              <strong>Formula:</strong> Freshness = e^(-decay_rate ×
+              days_elapsed)
             </p>
           </div>
         </CardContent>
@@ -494,19 +555,3 @@ export const TemporalDecayDashboard: React.FC<TemporalDecayDashboardProps> = ({
     </div>
   );
 };
-
-// Helper function to get days since update
-const getDaysSinceUpdate = (lastUpdated: string): number => {
-  const now = new Date();
-  const updated = new Date(lastUpdated);
-  const diffTime = Math.abs(now.getTime() - updated.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
-// Import supabase client for the indicator component
- 
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
