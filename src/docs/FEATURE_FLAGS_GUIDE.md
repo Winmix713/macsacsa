@@ -17,7 +17,7 @@ The feature flags system consists of:
 ### Provider and Hook
 
 - `src/providers/FeatureFlagsProvider.tsx` - Main context provider
-- `src/hooks/usePhaseFlags.tsx` - Convenience hook for phase-specific flags
+- `src/hooks/usePhaseFlags.ts` - Convenience hook for phase-specific flags
 - `src/components/AppRoutes.tsx` - Route protection based on flags
 
 ### Usage Examples

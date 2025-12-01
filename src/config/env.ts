@@ -8,15 +8,23 @@ const getEnv = () => {
 
 const envVars = getEnv();
 
+const supabaseProjectId = envVars.VITE_SUPABASE_PROJECT_ID || envVars.NEXT_PUBLIC_SUPABASE_PROJECT_ID || '';
+const supabaseUrl = envVars.VITE_SUPABASE_URL || envVars.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey =
+  envVars.VITE_SUPABASE_ANON_KEY ||
+  envVars.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  envVars.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  '';
+
 export const env = {
   mode: envVars.MODE || 'production',
   isDev: envVars.MODE === 'development',
   isProd: envVars.MODE === 'production',
   isTest: envVars.MODE === 'test',
   supabase: {
-    projectId: envVars.VITE_SUPABASE_PROJECT_ID || '',
-    url: envVars.VITE_SUPABASE_URL || '',
-    anonKey: envVars.VITE_SUPABASE_ANON_KEY || envVars.VITE_SUPABASE_PUBLISHABLE_KEY || ''
+    projectId: supabaseProjectId,
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   },
   oddsApi: {
     key: envVars.VITE_ODDS_API_KEY || ''
@@ -60,13 +68,14 @@ if (typeof window !== 'undefined' && !env.isTest && !validationRun) {
     
     // Re-check env vars after delay
     const currentEnv = getEnv();
-    const hasProjectId = currentEnv.VITE_SUPABASE_PROJECT_ID;
-    const hasUrl = currentEnv.VITE_SUPABASE_URL;
-    const hasAnonKey = currentEnv.VITE_SUPABASE_ANON_KEY || currentEnv.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const hasUrl = currentEnv.VITE_SUPABASE_URL || currentEnv.NEXT_PUBLIC_SUPABASE_URL;
+    const hasAnonKey =
+      currentEnv.VITE_SUPABASE_ANON_KEY ||
+      currentEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      currentEnv.VITE_SUPABASE_PUBLISHABLE_KEY;
     
-    if (!hasProjectId) missing.push('VITE_SUPABASE_PROJECT_ID');
-    if (!hasUrl) missing.push('VITE_SUPABASE_URL');
-    if (!hasAnonKey) missing.push('VITE_SUPABASE_ANON_KEY');
+    if (!hasUrl) missing.push('VITE_SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)');
+    if (!hasAnonKey) missing.push('VITE_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY)');
     
     if (missing.length > 0) {
       console.warn('⚠️ Missing Supabase environment variables:', missing.join(', '));

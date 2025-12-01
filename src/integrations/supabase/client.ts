@@ -1,55 +1,85 @@
-import { env } from '@/config/env';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const supabaseUrl = env.supabase.url?.trim();
-const supabaseAnonKey = env.supabase.anonKey?.trim();
+const resolveSupabaseEnv = () => {
+  const env = import.meta.env;
 
-const missingVars: string[] = [];
+  return {
+    projectId: env.VITE_SUPABASE_PROJECT_ID || env.NEXT_PUBLIC_SUPABASE_PROJECT_ID || '',
+    url: env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || '',
+    anonKey:
+      env.VITE_SUPABASE_ANON_KEY ||
+      env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      '',
+  };
+};
 
-if (!supabaseUrl) {
-  missingVars.push('VITE_SUPABASE_URL');
+const supabaseEnv = resolveSupabaseEnv();
+const missingSupabaseEnvKeys: string[] = [];
+
+if (!supabaseEnv.url) {
+  missingSupabaseEnvKeys.push('VITE_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL');
 }
 
-if (!supabaseAnonKey) {
-  missingVars.push('VITE_SUPABASE_ANON_KEY');
+if (!supabaseEnv.anonKey) {
+  missingSupabaseEnvKeys.push('VITE_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-if (missingVars.length > 0) {
-  const message = `Supabase client misconfiguration: ${missingVars.join(', ')} ${
-    missingVars.length === 1 ? 'is' : 'are'
-  } missing. Add the variable${missingVars.length > 1 ? 's' : ''} to your .env file (see .env.example) and restart the dev server.`;
+const supabaseEnvMessage =
+  missingSupabaseEnvKeys.length > 0
+    ? `Missing Supabase environment variables: ${missingSupabaseEnvKeys.join(
+        ', ',
+      )}. Provide VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY or their NEXT_PUBLIC_ equivalents.`
+    : '';
 
-  if (env.isDev) {
-    throw new Error(message);
-  }
+let hasLoggedMissingEnv = false;
 
-  if (!env.isTest) {
-    throw new Error(message);
-  }
+const createStubClient = (): SupabaseClient<Database> =>
+  new Proxy({} as SupabaseClient<Database>, {
+    get(_target, property) {
+      const reason =
+        supabaseEnvMessage ||
+        'Supabase client is not configured. Update your environment variables to enable Supabase connectivity.';
+      throw new Error(`${reason} Attempted to access "${String(property)}" on the Supabase client.`);
+    },
+  });
 
-  console.warn(`${message} Falling back to a no-op Supabase client for tests.`);
-}
+const globalScope = globalThis as typeof globalThis & {
+  __SUPABASE_CLIENT__?: SupabaseClient<Database>;
+};
 
-const createNoopClient = (): SupabaseClient<Database> =>
-  new Proxy(
-    {},
-    {
-      get() {
-        throw new Error(
-          'Supabase client was accessed during tests without configuration. Provide test credentials if Supabase interactions are required.'
-        );
-      }
+const createSupabaseClient = (): SupabaseClient<Database> => {
+  if (missingSupabaseEnvKeys.length > 0) {
+    if (import.meta.env.DEV) {
+      throw new Error(supabaseEnvMessage);
     }
-  ) as SupabaseClient<Database>;
 
-export const supabase: SupabaseClient<Database> =
-  supabaseUrl && supabaseAnonKey
-    ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          storage: typeof window !== 'undefined' ? localStorage : undefined,
-          persistSession: true,
-          autoRefreshToken: true
-        }
-      })
-    : createNoopClient();
+    if (!hasLoggedMissingEnv) {
+      console.warn(supabaseEnvMessage);
+      hasLoggedMissingEnv = true;
+    }
+
+    return createStubClient();
+  }
+
+  return createClient<Database>(supabaseEnv.url, supabaseEnv.anonKey, {
+    auth: {
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
+};
+
+export const getSupabaseClient = (): SupabaseClient<Database> => {
+  if (!globalScope.__SUPABASE_CLIENT__) {
+    globalScope.__SUPABASE_CLIENT__ = createSupabaseClient();
+  }
+
+  return globalScope.__SUPABASE_CLIENT__;
+};
+
+export const supabase = getSupabaseClient();
+
+export const supabaseProjectId = supabaseEnv.projectId;
