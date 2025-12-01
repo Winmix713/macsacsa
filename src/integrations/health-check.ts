@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ComponentHealth = {
-  dbConnectionStatus: "healthy" | "degraded" | "offline";
+  dbConnectionStatus: "healthy" | "degraded" | "offline" | "unknown";
   dbResponseTime: number;
   dbConnectionCount?: number;
   dbQueryQueueLength?: number;
