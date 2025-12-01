@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine affected stacks
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'package.json'
+              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig*.json'
+              - 'vite.config.ts'
+              - 'tailwind.config.js'
+              - 'postcss.config.js'
+              - 'src/**'
+              - '!src/ml_pipeline/**'
+              - 'public/**'
+            python:
+              - 'src/ml_pipeline/**'
+              - '.python-version'
+              - 'runtime.txt'
+
+  lint_and_build:
+    name: Web • Lint & Build
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            package.json
+      - name: Display tool versions
+        run: |
+          node --version
+          npm --version
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+        run: npm run build
+      - name: Upload build artifact
+        if: (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && github.event_name != 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist-${{ github.run_attempt }}
+          path: dist
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Job summary
+        run: |
+          {
+            echo "### Web • Lint & Build"
+            echo ""
+            echo "- Node: $(node --version)"
+            echo "- npm: $(npm --version)"
+            echo "- Draft PR build skipped: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  python-tests:
+    name: Python • pytest (${{ matrix.module }})
+    needs: changes
+    if: needs.changes.outputs.python == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - data_loader
+          - system_log
+          - train_model
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+          cache: 'pip'
+          cache-dependency-path: |
+            src/ml_pipeline/requirements.txt
+      - name: Display Python version
+        run: python --version
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/ml_pipeline/requirements.txt pytest
+      - name: Run pytest
+        run: |
+          pytest "src/ml_pipeline/tests/test_${{ matrix.module }}.py" --maxfail=1 --disable-warnings -q
+      - name: Upload pytest cache
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-cache-${{ matrix.module }}-${{ github.run_attempt }}
+          path: .pytest_cache
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Job summary
+        run: |
+          {
+            echo "### Python • pytest (${{ matrix.module }})"
+            echo ""
+            echo "- Python: $(python --version)"
+            echo "- Module: ${{ matrix.module }}"
+          } >> "$GITHUB_STEP_SUMMARY"
