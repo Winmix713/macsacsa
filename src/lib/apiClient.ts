@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { apiOrigins, env } from '@/config/env';
 import logger from '@/lib/logger';
 import type { Database } from '@/integrations/supabase/types';
+import type { PostgrestError } from '@supabase/supabase-js';
 
 // API response wrapper
 export interface ApiResponse<T = unknown> {
@@ -20,6 +21,12 @@ export interface EdgeFunctionOptions {
   params?: Record<string, string | number | undefined>;
 }
 type SupabaseFilterValue = string | number | boolean | null;
+
+type Tables = Database['public']['Tables'];
+type TableName = keyof Tables & string;
+type TableRow<Table extends TableName> = Tables[Table]['Row'];
+type TableInsert<Table extends TableName> = Tables[Table]['Insert'];
+type TableUpdate<Table extends TableName> = Tables[Table]['Update'];
 
 // Default timeout for edge function calls (10 seconds)
 const DEFAULT_TIMEOUT = 10000;
@@ -135,44 +142,46 @@ export async function callEdgeFunction<T = unknown>(functionName: string, option
 export class SupabaseClient {
   private client = supabase;
 
-  // Generic table operations
-  async select<T extends keyof Database['public']['Tables']>(table: T, options: {
-    columns?: string;
-    filter?: Record<string, SupabaseFilterValue>;
-    orderBy?: {
-      column: string;
-      ascending?: boolean;
-    };
-    limit?: number;
-    offset?: number;
-  } = {}) {
+  async select<Table extends TableName>(
+    table: Table,
+    options: {
+      columns?: string;
+      filter?: Record<string, SupabaseFilterValue>;
+      orderBy?: {
+        column: string;
+        ascending?: boolean;
+      };
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<{ data: TableRow<Table>[] | null; error: PostgrestError | null }> {
     let query = this.client.from(table).select(options.columns || '*');
 
-    // Apply filters
     if (options.filter) {
       Object.entries(options.filter).forEach(([key, value]) => {
-        query = query.eq(key, value);
+        if (value !== undefined && value !== null) {
+          query = query.eq(key, value);
+        }
       });
     }
 
-    // Apply ordering
     if (options.orderBy) {
       query = query.order(options.orderBy.column, {
         ascending: options.orderBy.ascending ?? true
       });
     }
 
-    // Apply pagination
-    if (options.limit) {
+    if (typeof options.limit === 'number') {
       query = query.limit(options.limit);
     }
-    if (options.offset) {
-      query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+
+    if (typeof options.offset === 'number') {
+      const limit = typeof options.limit === 'number' ? options.limit : 10;
+      query = query.range(options.offset, options.offset + limit - 1);
     }
-    const {
-      data,
-      error
-    } = await query;
+
+    const { data, error } = await query;
+
     if (error) {
       logger.error(`Supabase select error on ${String(table)}`, error, {
         table,
@@ -183,16 +192,19 @@ export class SupabaseClient {
         error
       };
     }
+
     return {
-      data,
+      data: (data as TableRow<Table>[] | null) ?? null,
       error: null
     };
   }
-  async insert<T extends keyof Database['public']['Tables']>(table: T, data: Database['public']['Tables'][T]['Insert']) {
-    const {
-      data: result,
-      error
-    } = await this.client.from(table).insert(data).select().single();
+
+  async insert<Table extends TableName>(
+    table: Table,
+    data: TableInsert<Table>
+  ): Promise<{ data: TableRow<Table> | null; error: PostgrestError | null }> {
+    const { data: result, error } = await this.client.from(table).insert(data).select().single();
+
     if (error) {
       logger.error(`Supabase insert error on ${String(table)}`, error, {
         table
@@ -202,16 +214,20 @@ export class SupabaseClient {
         error
       };
     }
+
     return {
-      data: result,
+      data: result as TableRow<Table>,
       error: null
     };
   }
-  async update<T extends keyof Database['public']['Tables']>(table: T, id: string, data: Database['public']['Tables'][T]['Update']) {
-    const {
-      data: result,
-      error
-    } = await this.client.from(table).update(data).eq('id', id).select().single();
+
+  async update<Table extends TableName>(
+    table: Table,
+    id: string,
+    data: TableUpdate<Table>
+  ): Promise<{ data: TableRow<Table> | null; error: PostgrestError | null }> {
+    const { data: result, error } = await this.client.from(table).update(data).eq('id', id).select().single();
+
     if (error) {
       logger.error(`Supabase update error on ${String(table)}`, error, {
         table,
@@ -222,15 +238,19 @@ export class SupabaseClient {
         error
       };
     }
+
     return {
-      data: result,
+      data: result as TableRow<Table>,
       error: null
     };
   }
-  async delete<T extends keyof Database['public']['Tables']>(table: T, id: string) {
-    const {
-      error
-    } = await this.client.from(table).delete().eq('id', id);
+
+  async delete<Table extends TableName>(
+    table: Table,
+    id: string
+  ): Promise<{ error: PostgrestError | null }> {
+    const { error } = await this.client.from(table).delete().eq('id', id);
+
     if (error) {
       logger.error(`Supabase delete error on ${String(table)}`, error, {
         table,
@@ -240,6 +260,7 @@ export class SupabaseClient {
         error
       };
     }
+
     return {
       error: null
     };
