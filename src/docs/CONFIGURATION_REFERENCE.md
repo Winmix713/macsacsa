@@ -23,10 +23,12 @@ Create a `.env` file in the project root (copy from `.env.example`):
 
 ```bash
 # Supabase Core Configuration
-VITE_SUPABASE_PROJECT_ID="wclutzbojatqtxwlvtab"
 VITE_SUPABASE_URL="https://wclutzbojatqtxwlvtab.supabase.co"
 VITE_SUPABASE_ANON_KEY="your_anon_key_here"
 VITE_SUPABASE_PUBLISHABLE_KEY="your_anon_key_here"  # Same as anon key
+
+# Optional: project identifier used for tooling & dashboards
+# VITE_SUPABASE_PROJECT_ID="wclutzbojatqtxwlvtab"
 ```
 
 **How to Get These Values:**
@@ -91,7 +93,7 @@ VITE_GITHUB_CLIENT_ID="your_github_client_id"
 
 | Variable | Type | Default | Required | Example |
 |----------|------|---------|----------|---------|
-| `VITE_SUPABASE_PROJECT_ID` | string | N/A | ✅ Yes | `wclutzbojatqtxwlvtab` |
+| `VITE_SUPABASE_PROJECT_ID` | string | N/A | ❌ No | `wclutzbojatqtxwlvtab` |
 | `VITE_SUPABASE_URL` | URL | N/A | ✅ Yes | `https://xxx.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | string | N/A | ✅ Yes | `eyJhbGc...` (long token) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | string | Same as anon | ❌ No | Same as above |
