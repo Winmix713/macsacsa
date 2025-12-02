@@ -350,3 +350,30 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+@keyframes winmix-gradient-shift {
+  0% {
+    transform: translate3d(-8%, -4%, 0);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(6%, 4%, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-10%, -6%, 0);
+    opacity: 0.9;
+  }
+}
+
+.winmix-auth-gradient {
+  position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(16, 185, 129, 0.45), transparent 55%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.3), transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(168, 85, 247, 0.25), transparent 55%),
+    linear-gradient(125deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.95));
+  animation: winmix-gradient-shift 18s ease-in-out infinite;
+  opacity: 0.85;
+}

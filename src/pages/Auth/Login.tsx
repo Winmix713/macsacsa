@@ -1,138 +1,181 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Provider } from "@supabase/auth-js";
+import { Loader2 } from "lucide-react";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
+  AuthLayout,
+  FloatingLabelInput,
+  PasswordField,
+  RememberMeSwitch,
+  SocialAuthButtons,
+} from "@/features/auth/components";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z
+    .string({ required_error: "Email is required" })
+    .min(1, "Email is required")
+    .email("Enter a valid email address"),
+  password: z
+    .string({ required_error: "Password is required" })
+    .min(6, "Password must be at least 6 characters"),
+  rememberMe: z.boolean().default(false),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+const REMEMBER_EMAIL_KEY = "winmix:auth:remember-email";
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Something went wrong. Please try again.";
+};
+
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { signIn, signInWithOAuth } = useAuth();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
+  const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const rememberedEmail = window.localStorage.getItem(REMEMBER_EMAIL_KEY);
+    if (rememberedEmail) {
+      form.setValue("email", rememberedEmail);
+      form.setValue("rememberMe", true);
+    }
+  }, [form]);
+
+  const handleSubmit = async (values: LoginFormData) => {
     try {
-      setIsLoading(true);
-      setError(null);
-      await signIn(data.email, data.password);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      setIsSubmitting(true);
+      await signIn(values.email, values.password);
+
+      if (typeof window !== "undefined") {
+        if (values.rememberMe) {
+          window.localStorage.setItem(REMEMBER_EMAIL_KEY, values.email);
+        } else {
+          window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        }
+      }
+
+      toast({
+        title: "Welcome back",
+        description: "You are now signed in to WinMix TipsterHub.",
+      });
+
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      toast({
+        title: "Unable to sign in",
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Sign in to WinMix TipsterHub
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register('email')}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
+  const handleSocialLogin = async (provider: Provider) => {
+    try {
+      await signInWithOAuth(provider);
+    } catch (error) {
+      toast({
+        title: "Social sign-in unavailable",
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-            </div>
-          </CardContent>
-          
-          <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
-            
-            <div className="text-sm text-center text-muted-foreground">
-              Don't have an account?{' '}
-              <Link
-                to="/signup"
-                className="text-primary hover:underline font-medium"
-              >
-                Sign up
-              </Link>
-            </div>
-            
-            <div className="text-sm text-center text-muted-foreground">
-              <Link
-                to="/"
-                className="text-primary hover:underline font-medium"
-              >
-                Back to home
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    watch,
+    formState: { errors },
+    setValue,
+  } = form;
+
+  return (
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to explore your WinMix dashboard"
+      footer={
+        <span>
+          Don't have an account?{" "}
+          <Link to="/register" className="font-semibold text-emerald-200 hover:text-emerald-100">
+            Create one
+          </Link>
+        </span>
+      }
+    >
+      <form onSubmit={handleFormSubmit(handleSubmit)} className="space-y-6">
+        <FloatingLabelInput
+          label="Email"
+          type="email"
+          autoComplete="email"
+          error={errors.email?.message}
+          disabled={isSubmitting}
+          {...register("email")}
+        />
+
+        <PasswordField
+          label="Password"
+          autoComplete="current-password"
+          error={errors.password?.message}
+          disabled={isSubmitting}
+          {...register("password")}
+        />
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <RememberMeSwitch
+            checked={watch("rememberMe")}
+            onCheckedChange={(checked) => setValue("rememberMe", checked)}
+            disabled={isSubmitting}
+          />
+          <Link
+            to="/forgot-password"
+            className="text-sm font-medium text-emerald-200 transition hover:text-emerald-100"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        <Button
+          type="submit"
+          className="h-12 w-full rounded-2xl bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isSubmitting ? "Signing in" : "Sign in"}
+        </Button>
+      </form>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Or continue with</span>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+        <SocialAuthButtons onSelect={handleSocialLogin} />
+      </div>
+    </AuthLayout>
   );
 };
 
