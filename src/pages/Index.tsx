@@ -1,5 +1,5 @@
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
+import AppSidebar from "@/components/navigation/AppSidebar";
+import GlobalHeader from "@/components/navigation/GlobalHeader";
 import HeroSection from "@/components/HeroSection";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <Sidebar />
-      <TopBar />
+      <AppSidebar />
+      <GlobalHeader />
       <main className="relative">
         <HeroSection />
         <section className="ml-0 md:ml-[84px] py-16 sm:py-24">

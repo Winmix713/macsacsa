@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
+import AppSidebar from "@/components/navigation/AppSidebar";
+import GlobalHeader from "@/components/navigation/GlobalHeader";
 import StatisticsCards from "@/components/dashboard/StatisticsCards";
 import RecentPredictions from "@/components/dashboard/RecentPredictions";
 import PatternPerformanceChart from "@/components/dashboard/PatternPerformanceChart";
@@ -170,8 +170,8 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black">
-        <Sidebar />
-        <TopBar />
+        <AppSidebar />
+        <GlobalHeader />
         <main className="lg:ml-64 pt-16 lg:pt-0">
           <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
@@ -193,8 +193,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Sidebar />
-      <TopBar />
+      <AppSidebar />
+      <GlobalHeader />
       <main className="lg:ml-64 pt-16 lg:pt-0">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">

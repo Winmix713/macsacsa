@@ -1,7 +1,7 @@
 import React, { Suspense, ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import Sidebar from '@/components/navigation/Sidebar';
+import AppSidebar from '@/components/navigation/AppSidebar';
 // Ellenőrizd, hogy a fájl neve nálad PageLoading.tsx vagy page-loading.tsx!
 import PageLoading from '@/components/ui/page-loading'; 
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -32,7 +32,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Sidebar - Fixen a bal oldalon */}
       {showSidebar && (
         <aside className="hidden lg:block shrink-0">
-          <Sidebar />
+          <AppSidebar />
         </aside>
       )}
 
