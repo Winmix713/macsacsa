@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import RecentPredictions from "@/components/dashboard/RecentPredictions";
 import { Button } from "@/components/ui/button";
@@ -100,49 +98,45 @@ const PredictionsView = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <Sidebar />
-      <TopBar />
-      <main className="relative">
-        <div className="ml-0 md:ml-[84px] py-10 sm:py-14">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-                  Predikciók áttekintése
-                </h1>
-                <p className="text-muted-foreground mt-2 max-w-2xl">
-                  Kövesd nyomon az AI által készített predikciókat, frissítsd a listát és indíts új elemzéseket közvetlenül a felületről.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={loadPredictions} disabled={loading} className="gap-2">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
-                  Lista frissítése
-                </Button>
-                <Button onClick={() => navigate("/predictions/new")} className="gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Új predikciók
-                </Button>
-              </div>
+    <div className="space-y-12 pb-12">
+      <section className="py-10 sm:py-14">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Predikciók áttekintése
+              </h1>
+              <p className="mt-2 max-w-2xl text-muted-foreground">
+                Kövesd nyomon az AI által készített predikciókat, frissítsd a listát és indíts új elemzéseket közvetlenül a felületről.
+              </p>
             </div>
-
-            {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <RecentPredictions predictions={predictions} />
-            )}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={loadPredictions} disabled={loading} className="gap-2">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                Lista frissítése
+              </Button>
+              <Button onClick={() => navigate("/predictions/new")} className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Új predikciók
+              </Button>
+            </div>
           </div>
+
+          {error ? (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <RecentPredictions predictions={predictions} />
+          )}
         </div>
-      </main>
+      </section>
       <Footer />
     </div>
   );

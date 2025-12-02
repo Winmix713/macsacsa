@@ -4,7 +4,7 @@ import TopPredictions from "./TopPredictions";
 
 const CallToAction = () => {
   return (
-    <section id="call-to-action" className="scroll-mt-24 ml-0 md:ml-[84px] py-10 sm:py-14">
+    <section id="call-to-action" className="scroll-mt-24 py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* CTA / Results Panel */}

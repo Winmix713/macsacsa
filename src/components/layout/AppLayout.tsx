@@ -1,10 +1,12 @@
-import React, { Suspense, ReactNode } from 'react';
-import { Outlet } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import Sidebar from '@/components/navigation/Sidebar';
-// Ellenőrizd, hogy a fájl neve nálad PageLoading.tsx vagy page-loading.tsx!
-import PageLoading from '@/components/ui/page-loading'; 
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { Suspense, type ReactNode, useMemo } from "react";
+import { Outlet } from "react-router-dom";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import AppSidebar from "@/components/layout/AppSidebar";
+import GlobalHeader from "@/components/layout/GlobalHeader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SIDEBAR_COOKIE_NAME } from "@/components/ui/sidebar.hooks";
+import PageLoading from "@/components/ui/page-loading";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children?: ReactNode;
@@ -16,50 +18,63 @@ interface AppLayoutProps {
   errorFallback?: ReactNode;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({
+const readSidebarPreference = () => {
+  if (typeof document === "undefined") {
+    return true;
+  }
+
+  const cookie = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+
+  if (!cookie) {
+    return true;
+  }
+
+  const value = cookie.split("=")[1];
+  return value !== "false";
+};
+
+const AppLayout = ({
   children,
   useOutlet = true,
   className,
   showSidebar = true,
   withErrorBoundary = true,
   loadingFallback,
-  errorFallback
-}) => {
+  errorFallback,
+}: AppLayoutProps) => {
   const content = useOutlet ? <Outlet /> : children;
+  const defaultSidebarOpen = useMemo(() => readSidebarPreference(), []);
 
-  const wrappedContent = (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Sidebar - Fixen a bal oldalon */}
-      {showSidebar && (
-        <aside className="hidden lg:block shrink-0">
-          <Sidebar />
-        </aside>
-      )}
-
-      {/* Fő tartalom terület - Ez tölti ki a maradék helyet */}
-      <main 
-        className={cn(
-          'flex-1 flex flex-col h-full overflow-hidden relative transition-all duration-300',
-          className
-        )}
-      >
-        {/* Görgethető konténer */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-          <div className="mx-auto max-w-7xl animate-fade-in space-y-6">
-            <Suspense fallback={loadingFallback || <PageLoading message="Betöltés..." />}>
-              {content}
-            </Suspense>
+  const layout = (
+    <SidebarProvider
+      defaultOpen={defaultSidebarOpen}
+      className="flex min-h-svh w-full bg-background text-foreground"
+    >
+      {showSidebar ? <AppSidebar /> : null}
+      <SidebarInset className="flex min-h-svh flex-1 flex-col bg-background/95">
+        <GlobalHeader />
+        <div className={cn("flex-1 overflow-hidden", className)}>
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <Suspense fallback={loadingFallback || <PageLoading message="Betöltés..." />}>
+                  {content}
+                </Suspense>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 
   if (withErrorBoundary) {
-    return <ErrorBoundary fallback={errorFallback}>{wrappedContent}</ErrorBoundary>;
+    return <ErrorBoundary fallback={errorFallback}>{layout}</ErrorBoundary>;
   }
 
-  return wrappedContent;
+  return layout;
 };
 
 export default AppLayout;
