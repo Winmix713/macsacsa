@@ -6,3 +6,4 @@ export * from './models';
 export * from './monitoring';
 export * from './phase9';
 export * from './ai-chat';
+export * from './predictions';

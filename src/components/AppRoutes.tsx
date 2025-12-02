@@ -22,9 +22,9 @@ import NewPredictions from '@/pages/NewPredictions';
 import Teams from '@/pages/Teams';
 import Leagues from '@/pages/Leagues';
 import Dashboard from '@/pages/Dashboard';
-import PredictionsView from '@/pages/PredictionsView';
+import PredictionsPage from '@/features/predictions/PredictionsPage';
 import Phase9 from '@/pages/Phase9';
-import NotFound from '@/pages/NotFound';
+
 import Unauthorized from '@/pages/Unauthorized';
 import FeatureFlagsDemo from '@/pages/FeatureFlagsDemo';
 
@@ -63,10 +63,10 @@ const AppRoutes: React.FC = () => {
         
         {/* PUBLIC PAGES (With Layout) */}
         <Route path="/" element={<AuthGuard requireAuth={false}><Index /></AuthGuard>} />
-        <Route path="/predictions" element={<AuthGuard requireAuth={false}><PredictionsView /></AuthGuard>} />
+        <Route path="/predictions" element={<AuthGuard requireAuth={false}><PredictionsPage /></AuthGuard>} />
         <Route path="/teams" element={<AuthGuard requireAuth={false}><Teams /></AuthGuard>} />
         <Route path="/leagues" element={<AuthGuard requireAuth={false}><Leagues /></AuthGuard>} />
-        <Route path="/feature-flags" element={<AuthGuard requireAuth={false}><FeatureFlagsDemo /></AuthGuard>} />
+
         
         <Route path="/matches" element={
           <AuthGuard requireAuth={false}>
