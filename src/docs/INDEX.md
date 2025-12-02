@@ -53,6 +53,7 @@ All project documentation is consolidated under this docs/ directory. The follow
 - [TESTING_GUIDE.md](./TESTING_GUIDE.md)
 - [SUPABASE_TO_NEON_MIGRATION.md](./SUPABASE_TO_NEON_MIGRATION.md)
 - [WINMIX_AURA_DESIGN_PROMPT_HU.md](./WINMIX_AURA_DESIGN_PROMPT_HU.md)
+- [WINMIX_TIPSTERHUB_PRO_PROMPT_V0.md](./WINMIX_TIPSTERHUB_PRO_PROMPT_V0.md)
 
 Images and assets:
 - [images/](./images/)
