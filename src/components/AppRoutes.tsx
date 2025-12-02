@@ -17,8 +17,10 @@ import WinmixProRoutes from '@/winmixpro/WinmixProRoutes';
 // Pages - Static Imports
 import Index from '@/pages/Index';
 import Login from '@/pages/Auth/Login';
-import Signup from '@/pages/Auth/Signup';
-import NewPredictions from '@/pages/NewPredictions';
+import Register from '@/pages/Auth/Register';
+import ForgotPassword from '@/pages/Auth/ForgotPassword';
+import EmailVerificationSuccess from '@/pages/Auth/EmailVerificationSuccess';
+
 import Teams from '@/pages/Teams';
 import Leagues from '@/pages/Leagues';
 import Dashboard from '@/pages/Dashboard';
@@ -284,7 +286,10 @@ const AppRoutes: React.FC = () => {
       {/* FULL SCREEN PAGES (No Layout/Sidebar)                                     */}
       {/* ------------------------------------------------------------------------- */}
       <Route path="/login" element={<AuthGuard requireAuth={false}><Login /></AuthGuard>} />
-      <Route path="/signup" element={<AuthGuard requireAuth={false}><Signup /></AuthGuard>} />
+      <Route path="/register" element={<AuthGuard requireAuth={false}><Register /></AuthGuard>} />
+      <Route path="/signup" element={<AuthGuard requireAuth={false}><Register /></AuthGuard>} />
+      <Route path="/forgot-password" element={<AuthGuard requireAuth={false}><ForgotPassword /></AuthGuard>} />
+      <Route path="/email-verification-success" element={<AuthGuard requireAuth={false}><EmailVerificationSuccess /></AuthGuard>} />
       <Route path="/unauthorized" element={<AuthGuard requireAuth={false}><Unauthorized /></AuthGuard>} />
 
       {/* ------------------------------------------------------------------------- */}

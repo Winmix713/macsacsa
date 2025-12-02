@@ -1,28 +1,65 @@
-import { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import type { Provider as OAuthProvider } from "@supabase/auth-js";
+import { authService } from "@/features/auth/services/authService";
+import type { UserProfile, UserRole } from "@/features/auth/types";
+import { useToast } from "@/hooks/use-toast";
 
-export type UserRole = 'admin' | 'analyst' | 'user';
+export type { UserProfile, UserRole } from "@/features/auth/types";
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  full_name: string | null;
-  role: UserRole;
-  created_at: string;
-  updated_at: string;
-}
+const VERIFICATION_EMAIL_KEY = "winmix:auth:verification-email";
+
+const getVerificationEmailFromStorage = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return window.sessionStorage.getItem(VERIFICATION_EMAIL_KEY);
+};
+
+const persistVerificationEmail = (value: string | null) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (value) {
+    window.sessionStorage.setItem(VERIFICATION_EMAIL_KEY, value);
+  } else {
+    window.sessionStorage.removeItem(VERIFICATION_EMAIL_KEY);
+  }
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Something went wrong. Please try again.";
+};
 
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
+  pendingVerificationEmail: string | null;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithOAuth: (provider: OAuthProvider) => Promise<void>;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  acknowledgeEmailVerification: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  hasRole: (role: UserRole) => boolean;
+  hasAnyRole: (roles: UserRole[]) => boolean;
+  isAdmin: () => boolean;
+  isAnalyst: () => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,162 +69,211 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const isMountedRef = useRef(true);
+  const { toast } = useToast();
+
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(
+    () => getVerificationEmailFromStorage(),
+  );
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data as UserProfile);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setProfile(null);
-    }
+  const updatePendingVerificationEmail = useCallback((value: string | null) => {
+    if (!isMountedRef.current) return;
+    setPendingVerificationEmail(value);
+    persistVerificationEmail(value);
   }, []);
 
-  const refreshProfile = useCallback(async () => {
-    if (user?.id) {
-      await fetchProfile(user.id);
-    }
-  }, [user?.id, fetchProfile]);
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
+
+  const loadProfile = useCallback(
+    async (userId: string) => {
+      try {
+        const data = await authService.fetchProfile(userId);
+        if (!isMountedRef.current) return;
+        setProfile(data);
+      } catch (error) {
+        if (!isMountedRef.current) return;
+        setProfile(null);
+        toast({
+          title: "Unable to load profile",
+          description: getErrorMessage(error),
+          variant: "destructive",
+        });
+      }
+    },
+    [toast],
+  );
+
+  const handleSessionChange = useCallback(
+    async (nextSession: Session | null) => {
+      if (!isMountedRef.current) return;
+
+      setSession(nextSession);
+      const nextUser = nextSession?.user ?? null;
+      setUser(nextUser);
+
+      if (nextUser) {
+        await loadProfile(nextUser.id);
+      } else {
+        setProfile(null);
+      }
+    },
+    [loadProfile],
+  );
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
+    let unsubscribe: (() => void) | undefined;
+    let isActive = true;
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+    const initialize = async () => {
+      try {
+        const initialSession = await authService.getSession();
+        if (!isActive) return;
+        await handleSessionChange(initialSession);
+      } catch (error) {
+        if (!isActive) return;
+        toast({
+          title: "Authentication unavailable",
+          description: getErrorMessage(error),
+          variant: "destructive",
+        });
+      } finally {
+        if (isActive && isMountedRef.current) {
+          setLoading(false);
         }
-
-        setLoading(false);
       }
-    );
+
+      unsubscribe = await authService.onAuthStateChange(async (_event, nextSession) => {
+        if (!isMountedRef.current) return;
+        await handleSessionChange(nextSession);
+      });
+    };
+
+    void initialize();
 
     return () => {
-      subscription.unsubscribe();
+      isActive = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
-  }, [fetchProfile]);
+  }, [handleSessionChange, toast]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const result = await authService.signInWithPassword(email, password);
+      await handleSessionChange(result.session);
+    },
+    [handleSessionChange],
+  );
 
-      if (error) throw error;
+  const signInWithOAuth = useCallback(async (provider: OAuthProvider) => {
+    await authService.signInWithOAuth(provider);
+  }, []);
 
-      if (data.user) {
-        await fetchProfile(data.user.id);
-        toast({
-          title: 'Welcome back!',
-          description: 'You have successfully signed in.',
-        });
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred during sign in';
-      toast({
-        title: 'Sign in failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  }, [fetchProfile, toast]);
-
-  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName || email,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast({
-          title: 'Account created!',
-          description: 'Please check your email to verify your account.',
-        });
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred during sign up';
-      toast({
-        title: 'Sign up failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  }, [toast]);
+  const signUp = useCallback(
+    async (email: string, password: string, fullName?: string) => {
+      const result = await authService.signUpWithPassword(email, password, fullName);
+      updatePendingVerificationEmail(email);
+      await handleSessionChange(result.session);
+    },
+    [handleSessionChange, updatePendingVerificationEmail],
+  );
 
   const signOut = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
+      await authService.signOut();
+      if (!isMountedRef.current) return;
       setUser(null);
       setSession(null);
       setProfile(null);
-
+      updatePendingVerificationEmail(null);
       toast({
-        title: 'Signed out',
-        description: 'You have been signed out successfully.',
+        title: "Signed out",
+        description: "You have been signed out successfully.",
       });
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred during sign out';
+    } catch (error) {
       toast({
-        title: 'Sign out failed',
-        description: errorMessage,
-        variant: 'destructive',
+        title: "Unable to sign out",
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
-      throw error;
     }
-  }, [toast]);
+  }, [toast, updatePendingVerificationEmail]);
 
-  const value: AuthContextType = {
-    user,
-    session,
-    profile,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    refreshProfile,
-  };
+  const sendPasswordReset = useCallback(async (email: string) => {
+    await authService.resetPassword(email);
+  }, []);
+
+  const acknowledgeEmailVerification = useCallback(async () => {
+    await authService.acknowledgeEmailVerification();
+    updatePendingVerificationEmail(null);
+  }, [updatePendingVerificationEmail]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    await loadProfile(user.id);
+  }, [loadProfile, user]);
+
+  const hasRole = useCallback(
+    (role: UserRole) => (profile ? profile.role === role : false),
+    [profile],
+  );
+
+  const hasAnyRole = useCallback(
+    (roles: UserRole[]) => (profile ? roles.includes(profile.role) : false),
+    [profile],
+  );
+
+  const isAdmin = useCallback(() => hasRole("admin"), [hasRole]);
+  const isAnalyst = useCallback(() => hasRole("analyst"), [hasRole]);
+
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      session,
+      profile,
+      loading,
+      pendingVerificationEmail,
+      signIn,
+      signInWithOAuth,
+      signUp,
+      signOut,
+      sendPasswordReset,
+      acknowledgeEmailVerification,
+      refreshProfile,
+      hasRole,
+      hasAnyRole,
+      isAdmin,
+      isAnalyst,
+    }),
+    [
+      acknowledgeEmailVerification,
+      hasAnyRole,
+      hasRole,
+      isAdmin,
+      isAnalyst,
+      loading,
+      pendingVerificationEmail,
+      profile,
+      refreshProfile,
+      session,
+      signIn,
+      signInWithOAuth,
+      signOut,
+      signUp,
+      sendPasswordReset,
+      user,
+    ],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
