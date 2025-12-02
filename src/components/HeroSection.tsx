@@ -10,7 +10,7 @@ import villaLogo from "@/assets/team-logo-villa.png";
 
 const HeroSection = () => {
   return (
-    <section id="hero" className="relative ml-0 md:ml-[84px]">
+    <section id="hero" className="relative">
       {/* Global background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(80%_60%_at_20%_30%,rgba(255,115,50,0.20),transparent_60%),radial-gradient(70%_60%_at_80%_70%,rgba(16,185,129,0.12),transparent_55%),linear-gradient(to-b,#0b0b0f,#000)]"></div>

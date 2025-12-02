@@ -228,7 +228,7 @@ const MatchSelection = () => {
   };
 
   return (
-    <section id="match-selection" className="scroll-mt-24 ml-0 md:ml-[84px] py-10 sm:py-14">
+    <section id="match-selection" className="scroll-mt-24 py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>

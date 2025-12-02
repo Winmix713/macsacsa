@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
 import StatisticsCards from "@/components/dashboard/StatisticsCards";
 import RecentPredictions from "@/components/dashboard/RecentPredictions";
 import PatternPerformanceChart from "@/components/dashboard/PatternPerformanceChart";
@@ -169,56 +167,42 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
-        <Sidebar />
-        <TopBar />
-        <main className="lg:ml-64 pt-16 lg:pt-0">
-          <div className="container mx-auto px-4 py-8">
-            <div className="mb-8">
-              <Skeleton className="h-12 w-64 mb-2" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-32" />
-              ))}
-            </div>
-            <Skeleton className="h-96 mb-8" />
-            <Skeleton className="h-96" />
-          </div>
-        </main>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <Skeleton className="mb-2 h-12 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <Skeleton className="mb-8 h-96" />
+        <Skeleton className="h-96" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <Sidebar />
-      <TopBar />
-      <main className="lg:ml-64 pt-16 lg:pt-0">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gradient-emerald mb-2">
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Kövesd nyomon a predikciók pontosságát és teljesítményét
-            </p>
-          </div>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="mb-2 text-4xl font-bold text-gradient-emerald">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Kövesd nyomon a predikciók pontosságát és teljesítményét
+        </p>
+      </div>
 
-          <StatisticsCards
-            totalPredictions={stats.totalPredictions}
-            accuracy={stats.accuracy}
-            topPattern={stats.topPattern}
-            winningStreak={stats.winningStreak}
-          />
+      <StatisticsCards
+        totalPredictions={stats.totalPredictions}
+        accuracy={stats.accuracy}
+        topPattern={stats.topPattern}
+        winningStreak={stats.winningStreak}
+      />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <RecentPredictions predictions={predictions} />
-            <PatternPerformanceChart data={patternData} />
-          </div>
-        </div>
-      </main>
+      <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <RecentPredictions predictions={predictions} />
+        <PatternPerformanceChart data={patternData} />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,4 @@
-import React, { ReactNode } from "react";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
+import type { ReactNode } from "react";
 
 interface PageLayoutProps {
   children: ReactNode;
@@ -8,18 +6,14 @@ interface PageLayoutProps {
   container?: boolean;
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({ children, container = true }) => {
+const PageLayout = ({ children, container = true }: PageLayoutProps) => {
+  if (!container) {
+    return <>{children}</>;
+  }
+
   return (
-    <div className="min-h-screen bg-black">
-      <Sidebar />
-      <TopBar />
-      <main className="lg:ml-64 pt-16 lg:pt-0">
-        {container ? (
-          <div className="container mx-auto px-4 py-8">{children}</div>
-        ) : (
-          children
-        )}
-      </main>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {children}
     </div>
   );
 };
