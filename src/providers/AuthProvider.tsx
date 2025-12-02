@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useEffect, useState, useCallback, ReactNode, useMemo } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,11 +18,18 @@ export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  role: UserRole | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  hasRole: (role: UserRole | UserRole[]) => boolean;
+  hasAnyRole: (roles: UserRole[]) => boolean;
+  hasAllRoles: (roles: UserRole[]) => boolean;
+  isAdmin: () => boolean;
+  isAnalyst: () => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,7 +68,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [user?.id, fetchProfile]);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -71,13 +77,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
         console.log('Auth state changed:', event, session?.user?.email);
-        
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -178,16 +183,65 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [toast]);
 
-  const value: AuthContextType = {
+  const role = profile?.role ?? null;
+  const isAuthenticated = Boolean(user);
+
+  const hasRole = useCallback((roleToCheck: UserRole | UserRole[]) => {
+    const rolesToCheck = Array.isArray(roleToCheck) ? roleToCheck : [roleToCheck];
+    return role ? rolesToCheck.includes(role) : false;
+  }, [role]);
+
+  const hasAnyRole = useCallback((roles: UserRole[]) => {
+    if (!roles || roles.length === 0) {
+      return true;
+    }
+    return roles.some((roleOption) => hasRole(roleOption));
+  }, [hasRole]);
+
+  const hasAllRoles = useCallback((roles: UserRole[]) => {
+    if (!roles || roles.length === 0) {
+      return true;
+    }
+    return roles.every((roleOption) => hasRole(roleOption));
+  }, [hasRole]);
+
+  const isAdmin = useCallback(() => role === 'admin', [role]);
+  const isAnalyst = useCallback(() => role === 'analyst', [role]);
+
+  const value = useMemo<AuthContextType>(() => ({
     user,
     session,
     profile,
+    role,
     loading,
+    isAuthenticated,
     signIn,
     signUp,
     signOut,
     refreshProfile,
-  };
+    hasRole,
+    hasAnyRole,
+    hasAllRoles,
+    isAdmin,
+    isAnalyst,
+  }), [
+    user,
+    session,
+    profile,
+    role,
+    loading,
+    isAuthenticated,
+    signIn,
+    signUp,
+    signOut,
+    refreshProfile,
+    hasRole,
+    hasAnyRole,
+    hasAllRoles,
+    isAdmin,
+    isAnalyst,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+

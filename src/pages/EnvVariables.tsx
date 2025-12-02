@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Download, Upload, Eye, EyeOff, Edit, Trash2, Shield, Key, Database, Mail, Settings, AlertTriangle } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
-import AuthGate from "@/components/AuthGate";
+import AppSidebar from "@/components/navigation/AppSidebar";
+import GlobalHeader from "@/components/navigation/GlobalHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -241,11 +240,10 @@ export default function EnvVariablesPage() {
   }, [variablesQuery.data]);
 
   return (
-    <AuthGate allowedRoles={['admin']}>
-      <div className="min-h-screen bg-black">
-        <Sidebar />
-        <TopBar />
-        <main className="lg:ml-64 pt-16 lg:pt-0">
+    <div className="min-h-screen bg-black">
+      <AppSidebar />
+      <GlobalHeader />
+      <main className="lg:ml-64 pt-16 lg:pt-0">
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
               <div>
@@ -640,6 +638,5 @@ export default function EnvVariablesPage() {
           </div>
         </main>
       </div>
-    </AuthGate>
   );
 }

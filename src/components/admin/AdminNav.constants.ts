@@ -1,5 +1,18 @@
 import type { AdminNavItem } from "@/types/admin";
-import { LayoutDashboard, Users, Workflow, Database, Cpu, ShieldCheck, Activity, MessageSquare } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Workflow,
+  Database,
+  Cpu,
+  ShieldCheck,
+  Activity,
+  MessageSquare,
+  Settings,
+  Palette,
+  Package,
+  Radar,
+} from "lucide-react";
 
 export const NAV_SECTIONS: Array<{
   label: string;
@@ -14,6 +27,13 @@ export const NAV_SECTIONS: Array<{
         href: "/admin",
         icon: LayoutDashboard,
         roles: ["admin", "analyst"],
+      },
+      {
+        label: "System Overview",
+        description: "Critical infrastructure snapshot",
+        href: "/admin/system-overview",
+        icon: Radar,
+        roles: ["admin"],
       },
     ],
   },
@@ -119,6 +139,13 @@ export const NAV_SECTIONS: Array<{
         description: "Component management and metrics",
         href: "/winmixpro/admin/components",
         icon: Package,
+        roles: ["admin", "analyst"],
+      },
+      {
+        label: "Feedback",
+        description: "User insights and prioritization",
+        href: "/winmixpro/admin/feedback",
+        icon: MessageSquare,
         roles: ["admin", "analyst"],
       },
     ],

@@ -16,23 +16,40 @@ import {
 } from "@/components/ui/sidebar";
 import { useAdminAuth } from "@/hooks/admin/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
+import { RoleGuard } from "@/features/auth/guards";
 import { NAV_SECTIONS } from "./AdminNav.constants";
 
 const AdminNav = () => {
   const location = useLocation();
-  const { profile: authProfile } = useAuth();
+  const auth = useAuth();
   const { profile: adminProfile } = useAdminAuth();
   const sidebar = useSidebar();
 
-  const profile = adminProfile ?? authProfile;
-  const role = profile?.role ?? "user";
+  const profile = adminProfile ?? auth.profile;
+  const resolvedRole = profile?.role ?? "user";
 
-  const sections = useMemo(() => (
-    NAV_SECTIONS.map((section) => ({
-      label: section.label,
-      items: section.items.filter((item) => !item.roles || item.roles.includes(role)),
-    })).filter((section) => section.items.length > 0)
-  ), [role]);
+  const authSnapshot = useMemo(
+    () => ({
+      loading: auth.loading,
+      isAuthenticated: auth.isAuthenticated,
+      role: auth.role,
+    }),
+    [auth.loading, auth.isAuthenticated, auth.role]
+  );
+
+  const sections = useMemo(
+    () =>
+      NAV_SECTIONS.map((section) => ({
+        label: section.label,
+        items: section.items.filter((item) => {
+          if (!item.roles || item.roles.length === 0) {
+            return true;
+          }
+          return RoleGuard.canAccess(authSnapshot, { allowedRoles: item.roles });
+        }),
+      })).filter((section) => section.items.length > 0),
+    [authSnapshot]
+  );
 
   const handleNavigate = () => {
     if (sidebar.isMobile) {
@@ -47,7 +64,7 @@ const AdminNav = () => {
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">WinMix Admin</span>
           <span className="text-lg font-semibold text-foreground">Control Center</span>
         </div>
-        <Badge variant="secondary" className="w-fit">{role.toUpperCase()}</Badge>
+        <Badge variant="secondary" className="w-fit">{resolvedRole.toUpperCase()}</Badge>
       </SidebarHeader>
       <SidebarContent>
         {sections.map((section, index) => (
@@ -59,16 +76,12 @@ const AdminNav = () => {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {section.items.map((item) => {
-                    const isActive = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
+                    const isActive =
+                      location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
 
                     return (
                       <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          size="lg"
-                          onClick={handleNavigate}
-                        >
+                        <SidebarMenuButton asChild isActive={isActive} size="lg" onClick={handleNavigate}>
                           <Link to={item.href} className="flex items-center gap-3">
                             <item.icon className="h-5 w-5" />
                             <span className="flex flex-col items-start">
@@ -91,7 +104,7 @@ const AdminNav = () => {
       </SidebarContent>
       <SidebarFooter className="border-t border-border/40 pt-4 text-xs text-muted-foreground">
         <p className="leading-relaxed">
-          Signed in as <span className="font-medium text-foreground">{profile?.email ?? "unknown"}</span>
+          Signed in as <span className="font-medium text-foreground">{profile?.email ?? auth.user?.email ?? "unknown"}</span>
         </p>
       </SidebarFooter>
     </Fragment>

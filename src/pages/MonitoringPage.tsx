@@ -20,8 +20,8 @@ import {
   Loader2,
   PlayCircle
 } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
+import AppSidebar from "@/components/navigation/AppSidebar";
+import GlobalHeader from "@/components/navigation/GlobalHeader";
 import AuthGate from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -349,8 +349,8 @@ export default function MonitoringPage() {
   return (
     <AuthGate allowedRoles={['admin', 'analyst']}>
       <div className="min-h-screen bg-black">
-        <Sidebar />
-        <TopBar />
+        <AppSidebar />
+        <GlobalHeader />
         <main className="lg:ml-64 pt-16 lg:pt-0">
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
